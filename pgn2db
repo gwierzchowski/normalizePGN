@@ -1,0 +1,64 @@
+#! /usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+# Python standard libraries
+import sys
+from os.path import basename
+
+pgn2db_version = '0.1.0' # set the same version number in db2pgn
+
+def _print_usage():
+    script_name = basename(sys.argv[0])
+    sys.stderr.writelines(
+"""Usage1: %s [-o] <PGNFile> <SQLiteFile>
+        -o means that <SQLiteFile> will be cleared before adding games
+Usage2: %s --version
+""" % (script_name, script_name))
+
+
+###########################################################################
+if __name__ == "__main__":
+    # 3Rd party packages from PyPI
+    from gamerec.storage.pgnfile.chess import ChessGameCollection as PGNChessGC
+    from gamerec.storage.sqlite.chess import ChessGameCollection as SQLiteChessGC
+    from gamerec.storage.sqlite.chess import _dictPython2Sqlite
+
+    #######################################################################
+    if (len(sys.argv) == 2 and sys.argv[1] == '--version'):
+        from gamerec.config import gamerec_version
+        print ('Python version:  %s' % sys.version)
+        print ('gamerec version: %s' % gamerec_version)
+        print ('pgn2db version:  %s' % pgn2db_version)
+        sys.exit(0)
+        
+    if (len(sys.argv) < 3):
+        print ('Too few command line arguments', file = sys.stderr)
+        _print_usage()
+        sys.exit(1)
+
+    cleardb = False
+    currop = 1
+    leftop = len(sys.argv)
+    while (currop < len(sys.argv) - 2):
+        if sys.argv[currop] == "-o":
+            cleardb = True
+            currop += 1
+        else:
+            print ("Unknown option:", sys.argv[currop], file = sys.stderr)
+            _print_usage()
+            sys.exit(1)
+
+    #######################################################################
+    PGNFile = sys.argv[currop]
+    SQLFile = sys.argv[currop + 1]
+
+    pgngc = PGNChessGC()
+    pgngc.load(PGNFile)
+    sqlgc = SQLiteChessGC()
+    sqlgc.data = pgngc.data
+    if pgngc.coding in _dictPython2Sqlite:
+        sqlgc.coding = pgngc.coding
+    else:
+        sqlgc.coding = "utf_8" #TODO: SQLite does support only UTF coding, nothing wrong happens if there are no national characters in pgn, 
+                               #      otherwise decoding must be implemented
+    sqlgc.save(SQLFile, cleardb)

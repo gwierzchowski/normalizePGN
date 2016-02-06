@@ -1,0 +1,64 @@
+#! /usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+# Python standard libraries
+import sys
+from os.path import basename
+
+db2pgn_version = '0.1.0' # set the same version number in pgm2db
+
+def _print_usage():
+    script_name = basename(sys.argv[0])
+    sys.stderr.writelines(
+"""Usage1: %s [-o] [-s <fields>] <SQLiteFile> <PGNFile>
+        -o means that <PGNFile> will be overwritten, otherwise games will be appended
+        -s means that games will be sorted, where <fields> is comma separated list of expressions (as in ORDER BY) to sort by
+Usage2: %s --version
+""" % (script_name, script_name))
+
+
+###########################################################################
+if __name__ == "__main__":
+    # 3Rd party packages from PyPI
+    from gamerec.storage.pgnfile.chess import ChessGameCollection as PGNChessGC
+    from gamerec.storage.sqlite.chess import ChessGameCollection as SQLiteChessGC
+
+    #######################################################################
+    if (len(sys.argv) == 2 and sys.argv[1] == '--version'):
+        from gamerec.config import gamerec_version
+        print ('Python version:  %s' % sys.version)
+        print ('gamerec version: %s' % gamerec_version)
+        print ('db2pgn version:  %s' % db2pgn_version)
+        sys.exit(0)
+        
+    if (len(sys.argv) < 3):
+        print ('Too few command line arguments', file = sys.stderr)
+        _print_usage()
+        sys.exit(1)
+
+    savemode = "a"
+    sort = ""
+    currop = 1
+    leftop = len(sys.argv)
+    while (currop < len(sys.argv) - 2):
+        if sys.argv[currop] == "-o":
+            savemode = "w"
+            currop += 1
+        elif sys.argv[currop] == "-s":
+            sort = sys.argv[currop+1]
+            currop += 2
+        else:
+            print ("Unknown option:", sys.argv[currop], file = sys.stderr)
+            _print_usage()
+            sys.exit(1)
+
+    #######################################################################
+    SQLFile = sys.argv[currop]
+    PGNFile = sys.argv[currop + 1]
+
+    sqlgc = SQLiteChessGC()
+    sqlgc.load(SQLFile, sort)
+    pgngc = PGNChessGC()
+    pgngc.data = sqlgc.data
+    pgngc.coding = sqlgc.coding
+    pgngc.save(PGNFile, savemode)
