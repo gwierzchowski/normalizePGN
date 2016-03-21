@@ -4,7 +4,7 @@ Normalize PGN
 Helper scripts to fix PGN meta-data before importing them to Chess DB.
 
 Works only with Python 3.  
-Tested only on Linux and Windows 7.  
+Tested only on Linux.  
 For package description see DESCR.md file.
 
 INSTALLATION (System wide - for all users):

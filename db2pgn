@@ -5,7 +5,7 @@
 import sys
 from os.path import basename
 
-db2pgn_version = '0.1.0' # set the same version number in pgm2db
+db2pgn_version = '0.1.1' # set the same version number in pgm2db
 
 def _print_usage():
     script_name = basename(sys.argv[0])
